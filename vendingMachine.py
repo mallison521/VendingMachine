@@ -12,7 +12,9 @@ class VendingMachine:
             "jolt": {"count": 0, "price": 0.75},
             "cups": {"count": 0},
             "coins": {"count": {"nickels": 0, "dimes": 0, "quarters": 0}},
-            "bills": {"count": {"ones": 0, "fives": 0}}
+            "coinsCustomer": {"count": {"nickels": 0, "dimes": 0, "quarters": 0}},
+            "bills": {"count": {"ones": 0, "fives": 0}},
+            "billsCustomer": {"count": {"ones": 0, "fives": 0}}
         }
         self.password = "1234"
 
@@ -52,13 +54,16 @@ class VendingMachine:
                 print("EXIT")
                 print(f"LOCK [{self.password}]")
         elif command[0].lower() == "add":
-            if command[1].lower() == "coke" or command[1].lower() == "pepsi" or command[1].lower() == "sprite" or command[1].lower() == "faygo" or command[1].lower() == "rc" or command[1].lower() == "jolt":
-                count = int(command[2])
-                if count < 0:
-                    print("Count cannot be negative")
+            if command[1].lower() == "cola":
+                if command[2].lower() == "coke" or command[2].lower() == "pepsi" or command[2].lower() == "sprite" or command[2].lower() == "faygo" or command[2].lower() == "rc" or command[2].lower() == "jolt":
+                    count = int(command[3])
+                    if count < 0:
+                        print("Count cannot be negative")
+                    else:
+                        self.inventory[command[2].lower()]["count"] += count
+                        print(f"Added {count} {command[2]}")
                 else:
-                    self.inventory[command[1].lower()]["count"] += count
-                    print(f"Added {count} {command[1]}")
+                    print("Not a valid command")
             elif command[1].lower() == "cups":
                 count = int(command[2])
                 if count < 0:
@@ -124,8 +129,7 @@ class VendingMachine:
                     else:
                         print("Sorry there is not enough in the machine")    
         elif command[0].lower() == "status":
-            total = self.inventory["bills"]["count"]["ones"] * 1 + self.inventory["bills"]["count"]["fives"] * 5 + self.inventory["coins"]["count"]["nickels"] * 0.05 + self.inventory["coins"]["count"]["dimes"] * .1 + self.inventory["coins"]["count"]["quarters"] * .25
-            print("Amount Deposited = " + str(total))
+            print("Total Amount in Machine = ${:.2f}".format(self.get_money_inserted() - self.get_money_inserted_customer()))
             print("total One Dollar Bills = " + str(self.inventory["bills"]["count"]["ones"]))
             print("total Five Dollar Bills = " + str(self.inventory["bills"]["count"]["fives"]))
             print("total Nickels = " + str(self.inventory["coins"]["count"]["nickels"]))
@@ -151,77 +155,140 @@ class VendingMachine:
             print("Cola <value> where value is coke pepsi sprite rc jolt faygo")
             print("Exit")
             print("Unlock [password]")
-        elif command[0].lower() in self.inventory:
+        elif command[0].lower() == "coin":
+            if command[1] == "5" or command[1] == "nickel".lower():
+                self.inventory["coinsCustomer"]["count"]["nickels"] += 1
+                print("5 cents received total amount is: {:.2f}".format(self.get_money_inserted_customer()))
+            elif command[1] == "10" or command[1] == "dime".lower():
+                self.inventory["coinsCustomer"]["count"]["dimes"] += 1
+                print("10 cents received total amount is: {:.2f}".format(self.get_money_inserted_customer()))
+            elif command[1] == "25" or command[1] == "quarter".lower():
+                self.inventory["coinsCustomer"]["count"]["quarters"] += 1
+                print("25 cents received total amount is: {:.2f}".format(self.get_money_inserted_customer()))
+            else:
+                print("Not a valid coin amount")
+        elif command[0].lower() == "bill":
+            if command[1] == "1":
+                self.inventory["billsCustomer"]["count"]["ones"] += 1
+                self.inventory["bills"]["count"]["ones"] += 1
+                print("1 dollar received total amount is: {:.2f}".format(self.get_money_inserted_customer()))
+            elif command[1] == "5":
+                self.inventory["billsCustomer"]["count"]["fives"] += 1
+                self.inventory["bills"]["count"]["fives"] += 1
+                print("5 dollars received total amount is: {:.2f}".format(self.get_money_inserted_customer()))
+        elif command[0].lower() == "cups":
             item = command[0].lower()
             if self.inventory[item] == "cups" and self.inventory[item]["count"] < 1:
                 print("No cups available")
             elif self.inventory[item]["count"] == 0:
                 print(f"{item} is out of stock")
-            else:
-                price = self.inventory[item]["price"]
-                if self.get_money_inserted() < price:
-                    print(f"Insert {price - self.get_money_inserted():.2f} more to buy {item}")
-                else:
-                    self.dispense_item(item, price)
-                    self.return_change(self.get_money_inserted() - price)
         elif command[0].lower() == "cola":
             if command[1].lower() == "coke":
-                print("Coke costs $" + str(self.inventory["coke"]["price"]))
+                price = self.inventory["coke"]["price"]
+                item = command[1].lower()
+                if self.inventory["coke"]["count"] > 0 and self.inventory["cups"]["count"] > 0:
+                    print("Coke costs $" + str(price))
+                    if self.get_money_inserted_customer() < self.inventory["coke"]["price"]:
+                        print(f"Insert ${price - self.get_money_inserted_customer():.2f} more to buy {item}")
+                    else:
+                        self.dispense_item(item)
+                        change = self.get_money_inserted_customer() - price
+                        print(f"Your change is ${change}")
+                else:
+                    print("Sorry coke is out or there are no cups left")
             elif command[1].lower() == "sprite":
-                print("Sprite costs $" + str(self.inventory["sprite"]["price"]))
+                price = self.inventory["sprite"]["price"]
+                item = command[1].lower()
+                if self.inventory["sprite"]["count"] > 0 and self.inventory["cups"]["count"] > 0:
+                    print("Sprite costs $" + str(price))
+                    if self.get_money_inserted_customer() < self.inventory["sprite"]["price"]:
+                        print(f"Insert ${price - self.get_money_inserted_customer():.2f} more to buy {item}")
+                    else:
+                        self.dispense_item(item)
+                        change = self.get_money_inserted_customer() - price
+                        print(f"Your change is ${change}")
+                else:
+                    print("Sorry sprite is out or there are no cups left")
             elif command[1].lower() == "rc":
-                print("RC Cola costs $" + str(self.inventory["rc"]["price"]))
+                price = self.inventory["rc"]["price"]
+                item = command[1].lower()
+                if self.inventory["rc"]["count"] > 0 and self.inventory["cups"]["count"] > 0:
+                    print("RC cola costs $" + str(price))
+                    if self.get_money_inserted_customer() < self.inventory["rc"]["price"]:
+                        print(f"Insert ${price - self.get_money_inserted_customer():.2f} more to buy {item}")
+                    else:
+                        self.dispense_item(item)
+                        change = self.get_money_inserted_customer() - price
+                        print(f"Your change is ${change}")
+                else:
+                    print("Sorry RC cola is out or there are no cups left")
             elif command[1].lower() == "jolt":
-                print("Jolt costs $" + str(self.inventory["jolt"]["price"]))
+                price = self.inventory["jolt"]["price"]
+                item = command[1].lower()
+                if self.inventory["jolt"]["count"] > 0 and self.inventory["cups"]["count"] > 0:
+                    print("Jolt costs $" + str(price))
+                    if self.get_money_inserted_customer() < self.inventory["jolt"]["price"]:
+                        print(f"Insert ${price - self.get_money_inserted_customer():.2f} more to buy {item}")
+                    else:
+                        self.dispense_item(item)
+                        change = self.get_money_inserted_customer() - price
+                        print(f"Your change is ${change}")
+                else:
+                    print("Sorry Jolt is out or there are no cups left")
             elif command[1].lower() == "faygo":
-                print("Faygo costs $" + str(self.inventory["faygo"]["price"]))
+                price = self.inventory["faygo"]["price"]
+                item = command[1].lower()
+                if self.inventory["faygo"]["count"] > 0 and self.inventory["cups"]["count"] > 0:
+                    print("Faygo costs $" + str(price))
+                    if self.get_money_inserted_customer() < self.inventory["faygo"]["price"]:
+                        print(f"Insert ${price - self.get_money_inserted_customer():.2f} more to buy {item}")
+                    else:
+                        self.dispense_item(item)
+                        change = self.get_money_inserted_customer() - price
+                        print(f"Your change is ${change}")
+                else:
+                    print("Sorry Faygo is out or there are no cups left")
             elif command[1].lower() == "pepsi":
-                print("Peps costs $" + str(self.inventory["pepsi"]["price"]))
-        elif command[0].lower() == "coin":
-            if command[1] == "5" or command[1] == "nickel".lower():
-                print("Add 5 cents to inventory")
-            elif command[1] == "10" or command[1] == "dime".lower():
-                print("Add 10 cents to inventory")
-            elif command[1] == "25" or command[1] == "quarter".lower():
-                print("Add 25 cents to inventory")
-            else:
-                print("Not a valid coin amount")
+                price = self.inventory["pepsi"]["price"]
+                item = command[1].lower()
+                if self.inventory["pepsi"]["count"] > 0 and self.inventory["cups"]["count"] > 0:
+                    print("Pepsi costs $" + str(price))
+                    if self.get_money_inserted_customer() < self.inventory["pepsi"]["price"]:
+                        print(f"Insert ${price - self.get_money_inserted_customer():.2f} more to buy {item}")
+                    else:
+                        self.dispense_item(item)
+                        change = self.get_money_inserted_customer() - price
+                        print(f"Your change is ${change}")
+                else:
+                    print("Sorry Pepsi is out or there are no cups left")
+        elif command[0].lower() == "exit":
+            print("Now exiting... Have a nice day.")
+            sys.exit()
         else:
             print("Invalid command")
+    
 
-    def get_bill_value(self, bill):
-        if bill.lower() == "ones":
-            return 1
-        elif bill.lower() == "fives":
-            return 5
-        elif bill.lower() == "tens":
-            return 10
-        elif bill.lower() == "twenties":
-            return 20
-        else:
-            return 0
-
+    def get_money_inserted_customer(self):
+        return self.inventory["coinsCustomer"]["count"]["nickels"] * 0.05 \
+               + self.inventory["coinsCustomer"]["count"]["dimes"] * 0.1 \
+               + self.inventory["coinsCustomer"]["count"]["quarters"] * 0.25 \
+               + self.inventory["billsCustomer"]["count"]["ones"] * 1 \
+               + self.inventory["billsCustomer"]["count"]["fives"] * 5 
+    
     def get_money_inserted(self):
-        return sum(self.inventory["coins"]["count"]["nickels"].values()) * 0.05 \
-               + sum(self.inventory["coins"]["count"]["dimes"].values()) * 0.1 \
-               + sum(self.inventory["coins"]["count"]["quarters"].values()) * 0.25 \
-               + sum(self.inventory["bills"]["count"]["ones"].values()) * 1 \
-               + sum(self.inventory["bills"]["count"]["fives"].values()) * 5 
+        return self.inventory["coins"]["count"]["nickels"] * 0.05 \
+               + self.inventory["coins"]["count"]["dimes"] * 0.1 \
+               + self.inventory["coins"]["count"]["quarters"] * 0.25 \
+               + self.inventory["bills"]["count"]["ones"] * 1 \
+               + self.inventory["bills"]["count"]["fives"] * 5 
 
-    def dispense_item(self, item, price):
-        self.inventory[item]["count"] -= 1
-        self.inventory["coins"]["price"] += price
-        print(f"Dispensed {item}")
+    def dispense_item(self, item):
+        total = self.inventory["bills"]["count"]["ones"] * 1 + self.inventory["bills"]["count"]["fives"] * 5 + self.inventory["coins"]["count"]["nickels"] * 0.05 + self.inventory["coins"]["count"]["dimes"] * .1 + self.inventory["coins"]["count"]["quarters"] * .25
+        if self.inventory[item]["count"] > 0:
+            self.inventory[item]["count"] -= 1
+            total -= total
+            print(f"Dispensed {item}")
 
-    def return_change(self, change):
-        if change > 0:
-            print(f"Change: ${change:.2f}")
-            self.inventory["Coins"]["price"] -= change
-            self.inventory["Coins"]["count"]["Quarters"] -= int(change // 0.25)
-            change = change % 0.25
-            self.inventory["Coins"]["count"]["Dimes"] -= int(change // 0.1)
-            change = change % 0.1
-            self.inventory["Coins"]["count"]["Nickels"] -= int(change // 0.05)
 
 vm = VendingMachine()
 vm.run()
