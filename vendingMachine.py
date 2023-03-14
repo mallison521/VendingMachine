@@ -129,7 +129,7 @@ class VendingMachine:
                     else:
                         print("Sorry there is not enough in the machine")    
         elif command[0].lower() == "status":
-            print("Total Amount in Machine = ${:.2f}".format(self.get_money_inserted() - self.get_money_inserted_customer()))
+            print("Total Amount in Machine = ${:.2f}".format(self.get_money_inserted()))
             print("total One Dollar Bills = " + str(self.inventory["bills"]["count"]["ones"]))
             print("total Five Dollar Bills = " + str(self.inventory["bills"]["count"]["fives"]))
             print("total Nickels = " + str(self.inventory["coins"]["count"]["nickels"]))
@@ -194,6 +194,7 @@ class VendingMachine:
                         self.dispense_item(item)
                         change = self.get_money_inserted_customer() - price
                         print(f"Your change is ${change}")
+                        self.change(change, self.get_money_inserted_customer())
                 else:
                     print("Sorry coke is out or there are no cups left")
             elif command[1].lower() == "sprite":
@@ -207,6 +208,7 @@ class VendingMachine:
                         self.dispense_item(item)
                         change = self.get_money_inserted_customer() - price
                         print(f"Your change is ${change}")
+                        self.change(change, self.get_money_inserted_customer())
                 else:
                     print("Sorry sprite is out or there are no cups left")
             elif command[1].lower() == "rc":
@@ -220,6 +222,7 @@ class VendingMachine:
                         self.dispense_item(item)
                         change = self.get_money_inserted_customer() - price
                         print(f"Your change is ${change}")
+                        self.change(change, self.get_money_inserted_customer())
                 else:
                     print("Sorry RC cola is out or there are no cups left")
             elif command[1].lower() == "jolt":
@@ -233,6 +236,7 @@ class VendingMachine:
                         self.dispense_item(item)
                         change = self.get_money_inserted_customer() - price
                         print(f"Your change is ${change}")
+                        self.change(change, self.get_money_inserted_customer())
                 else:
                     print("Sorry Jolt is out or there are no cups left")
             elif command[1].lower() == "faygo":
@@ -246,6 +250,7 @@ class VendingMachine:
                         self.dispense_item(item)
                         change = self.get_money_inserted_customer() - price
                         print(f"Your change is ${change}")
+                        self.change(change, self.get_money_inserted_customer())
                 else:
                     print("Sorry Faygo is out or there are no cups left")
             elif command[1].lower() == "pepsi":
@@ -259,6 +264,7 @@ class VendingMachine:
                         self.dispense_item(item)
                         change = self.get_money_inserted_customer() - price
                         print(f"Your change is ${change}")
+                        self.change(change, self.get_money_inserted_customer())
                 else:
                     print("Sorry Pepsi is out or there are no cups left")
         elif command[0].lower() == "exit":
@@ -267,6 +273,25 @@ class VendingMachine:
         else:
             print("Invalid command")
     
+    def change(self, change, customerPayment):
+        change_quarters = int(change / 0.25)
+        change-= change_quarters * 0.25  # subtract the value of the quarters from the change amount
+        change_dimes = int(change / 0.1) # calculate how many dimes to give
+        change -= change_dimes * 0.1  # subtract the value of the dimes from the change amount
+        change_nickels = int(change / 0.05) # calculate how many nickels to give
+        change -= change_nickels * 0.05 
+        change_fives = int(change / 5) # calculate how many nickels to give
+        change -= change_fives * 5
+        change_ones = int(change / 1) # calculate how many nickels to give
+        change -= change_ones * 1 
+        if change > 0:
+            print("Sorry, we don't have enough change. Here's your original payment of", customerPayment)
+        else:
+            self.inventory["coins"]["count"]["quarters"] -= change_quarters
+            self.inventory["coins"]["count"]["dimes"] -= change_dimes
+            self.inventory["coins"]["count"]["nickels"] -= change_nickels
+            self.inventory["bills"]["count"]["ones"] -= change_nickels
+            self.inventory["bills"]["count"]["fives"] -= change_nickels
 
     def get_money_inserted_customer(self):
         return self.inventory["coinsCustomer"]["count"]["nickels"] * 0.05 \
@@ -286,6 +311,7 @@ class VendingMachine:
         total = self.inventory["bills"]["count"]["ones"] * 1 + self.inventory["bills"]["count"]["fives"] * 5 + self.inventory["coins"]["count"]["nickels"] * 0.05 + self.inventory["coins"]["count"]["dimes"] * .1 + self.inventory["coins"]["count"]["quarters"] * .25
         if self.inventory[item]["count"] > 0:
             self.inventory[item]["count"] -= 1
+            self.inventory["cups"]["count"] -= 1
             total -= total
             print(f"Dispensed {item}")
 
